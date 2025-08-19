@@ -25,11 +25,20 @@ class DataBase:
             json.dump(self.users, file_db)
 
     def get_index_user(self, user_id):
-        # Ищет пользавателя по id и возвращает индекс в базе
-        for user_index, user_lot in enumerate(self.users):
-            if user_id == user_lot['id']:
-                return user_index
-        return 0
+        # Возвращает объект пользователя
+
+        # Защита от букв в индексе
+        try:
+            key = int(user_id)
+
+            if type(key) == int:
+                # Ищет пользавателя по id и возвращает индекс в базе
+                for user_index, user_lot in enumerate(self.users):
+                    if key == user_lot['id']:
+                        return user_index
+            return None
+        except:
+            return None
 
     def create_user(self, user_id):
         # Создаёт нового пользователя

@@ -9,7 +9,7 @@ from aiogram.types import FSInputFile, CallbackQuery, InlineKeyboardMarkup, Inli
 from aiogram.exceptions import TelegramBadRequest
 
 # AIOGRAM
-BOT_TOKEN = "8375169798:AAEWMOVjLkNtmZA9xrPtLUqKeq7A-fHb5-Q"
+BOT_TOKEN = "8375169798:AAFfjT5_xf2OWuBxVQOFWx9xjmiTvwFlDzs"
 ADMIN = [1020432840]  # Список админов
 bot = Bot(token=BOT_TOKEN, default=DefaultBotProperties(parse_mode='HTML'))
 dp = Dispatcher()
@@ -28,6 +28,7 @@ async def command_start_handler(message: types.Message) -> None:
         if user_lot["id"] == message.chat.id:
             if "recipient" in user_lot:
                 db.users[db.get_index_user(message.chat.id)].pop('recipient',None)
+                db.save_base()
             break
     else:
         # Пользователь не найден
@@ -37,19 +38,22 @@ async def command_start_handler(message: types.Message) -> None:
     args = message.text.split()
     if len(args) == 2:
         # Ключ получен
-        key = int(args[1])
 
         # Поиск ключа по базе
-        for user_index, user_lot in enumerate(db.users):
-            if int(user_lot['id']) == key:
-                # Ключ получателя найден
-                await bot.send_message(
-                    message.from_user.id,
-                    text="🚀 Здесь можно отправить анонимное сообщение человеку, который опубликовал эту ссылку\n\n🖊 Напишите сюда всё, что хотите ему передать, и через несколько секунд он получит ваше сообщение, но не будет знать от кого")
+        if db.get_index_user(args[1]) != None:
+            # Ключ получателя найден
+            await bot.send_message(
+                message.from_user.id,
+                text="🚀 Здесь можно отправить анонимное сообщение человеку, который опубликовал эту ссылку\n\n🖊 Напишите сюда всё, что хотите ему передать, и через несколько секунд он получит ваше сообщение, но не будет знать от кого")
 
-                # Даём пользователю индекс получателя
-                db.users[db.get_index_user(message.chat.id)]['recipient'] = key
-                db.save_base()
+            # Даём пользователю индекс получателя
+            db.users[db.get_index_user(message.chat.id)]['recipient'] = int(args[1])
+            db.save_base()
+        else:
+            await bot.send_message(
+                message.from_user.id,
+                text="Возможно ссылка повреждена, попробуйте её справить")
+
 
 
 # Обработка команды /get_url
@@ -80,7 +84,7 @@ async def send_sms_user(message: types.Message):
         # Отчёт о отправке сообщения отправлителю
         await bot.send_message(
             message.from_user.id,
-            text="Сообщение отправленно!\n\nЕсли хотите, можете продолжить писать следующие сообщения выбранному пользователю")
+            text="Сообщение отправленно!\n\nЕсли хотите, можете продолжить писать следующие сообщения выбранному пользователю\n\nЧто бы сбросить выбранного собеседника, перезапустите бота командой '/start'")
 
         # Отчёт о полученом сообщении получателю
         await bot.send_message(
