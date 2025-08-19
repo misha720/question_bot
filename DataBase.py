@@ -40,10 +40,14 @@ class DataBase:
         except:
             return None
 
-    def create_user(self, user_id):
+    def create_user(self, message, photo_path=None):
         # Создаёт нового пользователя
         new_user = {
-            "id": int(user_id),
+            "id": int(message.chat.id),
+            "username": message.chat.username,
+            "first_name": message.chat.first_name,
+            "last_name": message.chat.last_name,
+            "photo": photo_path,
             "question":[]
         }
 

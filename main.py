@@ -1,11 +1,13 @@
 # from loguru import logger
+from pprint import pprint
+
 import DataBase
 
 import asyncio
 from aiogram import Bot, Dispatcher, types, F
 from aiogram.filters import CommandStart, Command
 from aiogram.client.default import DefaultBotProperties
-from aiogram.types import FSInputFile, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.types import FSInputFile, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton, UserProfilePhotos
 from aiogram.exceptions import TelegramBadRequest
 
 # AIOGRAM
@@ -32,7 +34,19 @@ async def command_start_handler(message: types.Message) -> None:
             break
     else:
         # Пользователь не найден
-        db.create_user(int(message.chat.id))
+
+        # Фото профиля
+        user_profile_photo: UserProfilePhotos = await bot.get_user_profile_photos(message.from_user.id)
+        if len(user_profile_photo.photos) > 0:
+            file_url = './photo/' + str(message.chat.id) + '.png'
+            file = await bot.get_file(user_profile_photo.photos[0][0].file_id)
+            await bot.download_file(file.file_path, file_url)
+
+            # Создание пользователя
+            db.create_user(message, file_url)
+        else:
+            # Создание пользователя
+            db.create_user(message)
 
     # Захват ключа
     args = message.text.split()
@@ -53,17 +67,11 @@ async def command_start_handler(message: types.Message) -> None:
             await bot.send_message(
                 message.from_user.id,
                 text="Возможно ссылка повреждена, попробуйте её справить")
-
-
-
-# Обработка команды /get_url
-@dp.message(F.text == "/get_url")
-async def get_url(message: types.Message):
-
-    sender_url = "http://t.me/ultra_anonim_question_bot?start=" + str(message.from_user.id)
-    await bot.send_message(
-        message.from_user.id,
-        text="Вот Ваша ссылка для получения анонимных сообщений:\n\n" + sender_url + "\n\nМожете её разместить в своей истории, Telegram-канале и тд.")
+    else:
+        sender_url = "http://t.me/ultra_anonim_question_bot?start=" + str(message.from_user.id)
+        await bot.send_message(
+            message.from_user.id,
+            text="Начните получать анонимные сообщения прямо сейчас! Вот Ваша ссылка:\n\n" + sender_url + "\n\nМожете её разместить в своей истории, Telegram-канале и тд.")
 
 
 # Получение сообщения для получателя
